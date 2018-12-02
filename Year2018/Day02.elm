@@ -1,12 +1,12 @@
 module Year2018.Day02 exposing (..)
 
-import Advent
-    exposing
-        ( Test
-          -- , unsafeToInt
-          -- , unsafeMaybe
-        )
+import Advent exposing (Test)
 import Dict exposing (Dict)
+import Utilities
+    exposing
+        ( pairwiseCombinations
+        , unique
+        )
 
 
 -- 1. TYPES (what is the best representation of the problem?)
@@ -25,7 +25,7 @@ type alias Output1 =
 
 
 type alias Output2 =
-    Int
+    List String
 
 
 
@@ -33,14 +33,13 @@ type alias Output2 =
 
 
 parse1 : String -> Input1
-parse1 string =
-    string
-        |> String.lines
+parse1 =
+    String.lines
 
 
 parse2 : String -> Input2
-parse2 string =
-    parse1 string
+parse2 =
+    parse1
 
 
 
@@ -49,6 +48,47 @@ parse2 string =
 
 compute1 : Input1 -> Output1
 compute1 input =
+    List.length (repeated 2 input) * List.length (repeated 3 input)
+
+
+compute2 : Input2 -> Output2
+compute2 input =
+    let
+        isDifferentInOneCharacter : ( String, String ) -> Bool
+        isDifferentInOneCharacter ( a, b ) =
+            (List.map2 (/=) (String.toList a) (String.toList b)
+                |> List.filter identity
+                |> List.length
+            )
+                == 1
+
+        differentPairs : List String -> List ( String, String )
+        differentPairs pairs =
+            List.filter isDifferentInOneCharacter (pairwiseCombinations pairs)
+
+        sameCharacters : ( String, String ) -> String
+        sameCharacters ( a, b ) =
+            List.map2 Tuple.pair (String.toList a) (String.toList b)
+                |> List.filter (\( x, y ) -> x == y)
+                |> List.map Tuple.first
+                |> String.fromList
+    in
+    (repeated 2 input ++ repeated 3 input)
+        |> unique
+        |> differentPairs
+        |> List.map sameCharacters
+
+
+
+{-
+
+   Shared for both parts.
+
+-}
+
+
+repeated : Int -> List String -> List String
+repeated n =
     let
         frequencies : String -> Dict Char Int
         frequencies =
@@ -61,17 +101,8 @@ compute1 input =
                             Dict.insert item 1 table
                     )
                     Dict.empty
-
-        repeated : Int -> List String -> List String
-        repeated n =
-            List.filter (frequencies >> Dict.values >> List.member n)
     in
-    List.length (repeated 2 input) * List.length (repeated 3 input)
-
-
-compute2 : Input2 -> Output2
-compute2 input =
-    -1
+    List.filter (frequencies >> Dict.values >> List.member n)
 
 
 
